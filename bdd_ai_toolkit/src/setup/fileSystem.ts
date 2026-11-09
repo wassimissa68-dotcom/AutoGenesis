@@ -4,7 +4,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import { Platform } from "./platform";
 
 /**
  * Ensure a directory exists, creating it if necessary
@@ -17,22 +16,14 @@ export function ensureDirectoryExists(dirPath: string): void {
 }
 
 /**
- * Open a directory in the native file explorer
+ * Open a directory in the native file explorer safely using VS Code API.
+ * Security: Avoids shell command execution (open/explorer/xdg-open) via child_process.exec,
+ * eliminating command injection vulnerabilities from unescaped or malicious paths.
  * @param dirPath The directory path to open
  */
 export function openInFileExplorer(dirPath: string): void {
-  const { exec } = require("child_process");
-
-  if (Platform.isMacOS) {
-    // macOS - Use 'open' command to open in Finder
-    exec(`open "${dirPath}"`);
-  } else if (Platform.isWindows) {
-    // Windows - Use 'explorer' command
-    exec(`explorer "${dirPath}"`);
-  } else {
-    // Linux - Try xdg-open (fallback, though we removed Linux support)
-    exec(`xdg-open "${dirPath}"`);
-  }
+  const uri = vscode.Uri.file(dirPath);
+  vscode.commands.executeCommand("revealFileInOS", uri);
 }
 
 /**
