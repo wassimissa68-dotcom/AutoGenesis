@@ -115,7 +115,7 @@
     "compile": "node scripts/compile.js",
     "compile-ts": "tsc -p ./",
     "watch": "npm run compile && tsc -watch -p ./",
-    "package": "npm run compile && vsce package",
+    "package": "node scripts/package-vsix.js",
     "watch-tests": "tsc -p . --outDir out --watch",
     "pretest": "npm run compile",
     "package-vsix": "node scripts/package-vsix.js",
