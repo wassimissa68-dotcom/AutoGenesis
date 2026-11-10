@@ -17,21 +17,35 @@ export function ensureDirectoryExists(dirPath: string): void {
 }
 
 /**
- * Open a directory in the native file explorer
+ * Open a directory in the native file explorer.
+ * Uses execFile with argument arrays to prevent command injection vulnerabilities.
  * @param dirPath The directory path to open
  */
 export function openInFileExplorer(dirPath: string): void {
-  const { exec } = require("child_process");
+  // Security validation: Prevent path traversal/null byte injections and invalid inputs
+  if (!dirPath || typeof dirPath !== "string" || dirPath.includes("\0")) {
+    console.error("Invalid directory path provided to openInFileExplorer");
+    return;
+  }
+
+  // Security: Use execFile without shell invocation to avoid command injection via malicious path characters
+  const { execFile } = require("child_process");
+
+  const handleError = (error: Error | null) => {
+    if (error) {
+      console.error(`Failed to open path in file explorer: ${error.message}`);
+    }
+  };
 
   if (Platform.isMacOS) {
     // macOS - Use 'open' command to open in Finder
-    exec(`open "${dirPath}"`);
+    execFile("open", [dirPath], handleError);
   } else if (Platform.isWindows) {
-    // Windows - Use 'explorer' command
-    exec(`explorer "${dirPath}"`);
+    // Windows - Use 'explorer.exe' command
+    execFile("explorer.exe", [dirPath], handleError);
   } else {
     // Linux - Try xdg-open (fallback, though we removed Linux support)
-    exec(`xdg-open "${dirPath}"`);
+    execFile("xdg-open", [dirPath], handleError);
   }
 }
 
