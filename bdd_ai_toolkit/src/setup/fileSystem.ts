@@ -17,21 +17,22 @@ export function ensureDirectoryExists(dirPath: string): void {
 }
 
 /**
- * Open a directory in the native file explorer
+ * Open a directory in the native file explorer safely using VS Code API.
+ * Security: Uses vscode built-in 'revealFileInOS' instead of invoking child_process.exec
+ * with string interpolation, preventing command injection vulnerabilities.
  * @param dirPath The directory path to open
  */
 export function openInFileExplorer(dirPath: string): void {
-  const { exec } = require("child_process");
+  if (!dirPath || typeof dirPath !== "string") {
+    console.warn("Invalid directory path provided to openInFileExplorer");
+    return;
+  }
 
-  if (Platform.isMacOS) {
-    // macOS - Use 'open' command to open in Finder
-    exec(`open "${dirPath}"`);
-  } else if (Platform.isWindows) {
-    // Windows - Use 'explorer' command
-    exec(`explorer "${dirPath}"`);
-  } else {
-    // Linux - Try xdg-open (fallback, though we removed Linux support)
-    exec(`xdg-open "${dirPath}"`);
+  try {
+    const fileUri = vscode.Uri.file(dirPath);
+    vscode.commands.executeCommand("revealFileInOS", fileUri);
+  } catch (error) {
+    console.error("Failed to open file in native explorer:", error);
   }
 }
 
